@@ -7,9 +7,13 @@
 	"main": "src/index.ts",
 	"type": "module",
 	"scripts": {
-		"dev": "tsx --watch",
-		"run": "tsx .",
+		"dev": "tsx --no-warnings --env-file=.env --watch .",
+		"run": "tsx --env-file=.env .",
 		"fmt": "biome check --vcs-client-kind=git --vcs-root=. --vcs-enabled=true --vcs-use-ignore-file=true"
+	},
+	"dependencies": {
+		"fast-xml-parser": "^4.4.1",
+		"fastify": "^4.28.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.8.3",
