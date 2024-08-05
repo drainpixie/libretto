@@ -1,6 +1,9 @@
-// https://specs.opds.io/opds-1.2.html
 import { XMLBuilder } from "fast-xml-parser";
 
+// https://specs.opds.io/opds-1.2.html
+// Regions help because folding.
+
+// #region OPDS Data Types
 interface Link {
 	"@_rel": string;
 	"@_href": string;
@@ -23,7 +26,7 @@ interface Entry {
 	};
 }
 
-export interface OPDSFeed {
+interface Feed {
 	"?xml": { "@_version": string; "@_encoding": string };
 	feed: {
 		"@_xmlns": string;
@@ -41,49 +44,63 @@ const BUILDER = new XMLBuilder({
 	format: true,
 });
 
-export function buildOPDSFeed(data: OPDSFeed): string {
-	return BUILDER.build(data);
+// #endregion
+// #region OPDS Data Types Builders
+class FeedBuilder {
+	#feed: Feed = {
+		"?xml": { "@_version": "1.0", "@_encoding": "UTF-8" },
+		feed: {
+			"@_xmlns": "http://www.w3.org/2005/Atom",
+			id: "",
+			link: [],
+			title: "",
+			updated: "",
+			author: { name: "", uri: "" },
+			entry: [],
+		},
+	};
+
+	id(id: string) {
+		this.#feed.feed.id = id;
+		return this;
+	}
+
+	link(rel: string, href: string, type: string) {
+		this.#feed.feed.link.push({ "@_rel": rel, "@_href": href, "@_type": type });
+		return this;
+	}
+
+	title(title: string) {
+		this.#feed.feed.title = title;
+		return this;
+	}
+
+	updated(updated: string) {
+		this.#feed.feed.updated = updated;
+		return this;
+	}
+
+	author(name: string, uri: string) {
+		this.#feed.feed.author = { name, uri };
+		return this;
+	}
+
+	entry(
+		title: string,
+		link: Link,
+		updated: string,
+		id: string,
+		content: { "@_type": string; "#text": string },
+	) {
+		this.#feed.feed.entry.push({ title, link, updated, id, content });
+		return this;
+	}
+
+	build() {
+		return BUILDER.build(this.#feed);
+	}
 }
 
-export const MOCK_DATA: OPDSFeed = {
-	"?xml": { "@_version": "1.0", "@_encoding": "UTF-8" },
-	feed: {
-		"@_xmlns": "http://www.w3.org/2005/Atom",
-		id: "urn:uuid:2853dacf-ed79-42f5-8e8a-a7bb3d1ae6a2",
-		link: [
-			{
-				"@_rel": "self",
-				"@_href": "/opds-catalogs/root.xml",
-				"@_type": "application/atom+xml;profile=opds-catalog;kind=navigation",
-			},
-			{
-				"@_rel": "start",
-				"@_href": "/opds-catalogs/root.xml",
-				"@_type": "application/atom+xml;profile=opds-catalog;kind=navigation",
-			},
-		],
-		title: "OPDS Catalog Root Example",
-		updated: "2010-01-10T10:03:10Z",
-		author: {
-			name: "Spec Writer",
-			uri: "http://opds-spec.org",
-		},
-		entry: [
-			{
-				title: "Popular publications",
-				link: {
-					"@_rel": "http://opds-spec.org/sort/popular",
-					"@_href": "/opds-catalogs/popular.xml",
-					"@_type":
-						"application/atom+xml;profile=opds-catalog;kind=acquisition",
-				},
-				updated: "2010-01-10T10:01:01Z",
-				id: "urn:uuid:d49e8018-a0e0-499e-9423-7c175fa0c56e",
-				content: {
-					"@_type": "text",
-					"#text": "Popular publications from this catalog based on downloads.",
-				},
-			},
-		],
-	},
-};
+// #endregion
+
+export const feed = () => new FeedBuilder();
