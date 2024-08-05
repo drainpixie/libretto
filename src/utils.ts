@@ -6,7 +6,9 @@ const createValueParser =
 	};
 
 const parseNumber = createValueParser(Number);
+const parseString = createValueParser((v) => `${v}`);
 
 export const env = {
 	port: parseNumber("PORT", 3000),
+	host: parseString("HOST", "127.0.0.1"),
 } as const;

@@ -12,6 +12,8 @@
 		"fmt": "biome check --vcs-client-kind=git --vcs-root=. --vcs-enabled=true --vcs-use-ignore-file=true"
 	},
 	"dependencies": {
+		"@fastify/cors": "^9.0.1",
+		"@fastify/helmet": "^11.1.1",
 		"fast-xml-parser": "^4.4.1",
 		"fastify": "^4.28.1"
 	},
