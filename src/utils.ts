@@ -1,3 +1,6 @@
+/**
+ * Utility to create parser without repeating type signature
+ */
 const createValueParser =
 	<T = unknown>(parser: (value: unknown) => T) =>
 	(key: string, defaultValue: T) => {

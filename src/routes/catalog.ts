@@ -1,9 +1,11 @@
 import type { FastifyInstance } from "fastify";
+import { MOCK_DATA, buildOPDSFeed } from "../opds";
 
-const MOCK_DATA = [
-	{ title: "Book 1", author: "Author 1" },
-	{ title: "Book 2", author: "Author 2" },
-	{ title: "Book 3", author: "Author 3" },
-];
+export default async function (app: FastifyInstance) {
+	app.get("/catalog", async (req, res) => {
+		const feed = buildOPDSFeed(MOCK_DATA);
 
-export default async function (app: FastifyInstance) {}
+		res.header("Content-Type", "application/atom+xml; charset=utf-8");
+		res.send(feed);
+	});
+}
