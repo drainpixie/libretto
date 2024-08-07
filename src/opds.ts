@@ -96,6 +96,10 @@ class FeedBuilder {
 		return this;
 	}
 
+	static rel(kind: "acquisition" | "navigation") {
+		return `application/atom+xml;profile=opds-catalog;kind=${kind}`;
+	}
+
 	build() {
 		return BUILDER.build(this.#feed);
 	}
@@ -104,3 +108,4 @@ class FeedBuilder {
 // #endregion
 
 export const feed = () => new FeedBuilder();
+export const rel = FeedBuilder.rel;
