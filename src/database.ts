@@ -4,6 +4,7 @@ import { default as sqlite } from "better-sqlite3";
 import { default as mime } from "mime";
 
 import { APP } from ".";
+import { OPDS_MIME_ALLOW_LIST } from "./opds";
 import { env, fetchBookInfo, removeFileExtension } from "./utils";
 
 export const DB = sqlite(resolve(process.cwd(), "libretto.db"));
@@ -21,6 +22,12 @@ export async function initialise() {
   `);
 
 	for (const file of await readdir(env.dataPath)) {
+		const mimetype = mime.getType(file);
+		if (!mimetype || OPDS_MIME_ALLOW_LIST.indexOf(mimetype) === -1) {
+			APP.log.warn(`Skipping ${file} due to unsupported mime type`);
+			continue;
+		}
+
 		if (DB.prepare("SELECT * FROM books WHERE file = ?").get(file)) {
 			APP.log.warn(`Skipping ${file} due to already being in the database`);
 			continue;
@@ -37,7 +44,7 @@ export async function initialise() {
 			DB.prepare(`
         INSERT INTO books (title, author, cover, file, mime)
         VALUES (?, ?, ?, ?, ?);
-      `).run(data.title, data.author, data.cover, file, mime.getType(file));
+      `).run(data.title, data.author, data.cover, file, mimetype);
 		} catch (error) {
 			APP.log.error(error);
 		}
