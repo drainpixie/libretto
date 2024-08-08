@@ -16,7 +16,8 @@
 		"@fastify/helmet": "^11.1.1",
 		"@fastify/static": "^7.0.4",
 		"fast-xml-parser": "^4.4.1",
-		"fastify": "^4.28.1"
+		"fastify": "^4.28.1",
+		"mime": "^4.0.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.8.3",

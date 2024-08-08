@@ -3,6 +3,15 @@ import { XMLBuilder } from "fast-xml-parser";
 // https://specs.opds.io/opds-1.2.html
 // Regions help because folding.
 
+export const OPDS_MIME_ALLOW_LIST = [
+	"application/x-mobipocket-ebook",
+	"application/epub+zip",
+	"application/x-cbz",
+	"application/x-cbr",
+	"application/pdf",
+	"text/fb2+xml",
+];
+
 // #region OPDS Data Types
 interface Link {
 	"@_rel": string;

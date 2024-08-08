@@ -1,7 +1,9 @@
-import { readdir } from "node:fs/promises";
+import { access, readdir, stat } from "node:fs/promises";
 import type { FastifyInstance } from "fastify";
+import { default as mime } from "mime";
 
-import { feed, rel } from "../opds";
+import { resolve } from "node:path";
+import { OPDS_MIME_ALLOW_LIST, feed, rel } from "../opds";
 import { env, removeFileExtension, toKebabCase, toTitleCase } from "../utils";
 
 export default async function (app: FastifyInstance) {
@@ -16,19 +18,25 @@ export default async function (app: FastifyInstance) {
 		for (const file of await readdir(env.dataPath)) {
 			// TODO: Parse metadata from file
 			const cleanFilename = removeFileExtension(file);
+			const type = mime.getType(file);
+
+			if (!type || OPDS_MIME_ALLOW_LIST.indexOf(type) === -1) {
+				res.log.warn(`Skipping ${file} due to unsupported mime type`);
+				continue;
+			}
 
 			data.entry(
 				toTitleCase(cleanFilename),
 				{
 					"@_rel": "http://opds-spec.org/acquisition",
 					"@_href": `/catalog/${file}`,
-					"@_type": "application/epub+zip", // TODO: Mimetype
+					"@_type": type,
 				},
 				rel("acquisition"),
 				toKebabCase(cleanFilename),
 				{
 					"@_type": "text",
-					"#text": `This izs the ${cleanFilename} book`,
+					"#text": `This is the ${cleanFilename} book`,
 				},
 			);
 		}
@@ -55,9 +63,19 @@ export default async function (app: FastifyInstance) {
 		{ schema: bookSchema },
 		async (req, res) => {
 			const { book } = req.params;
+			const path = resolve(env.dataPath, book);
 
-			res.header("Content-Type", "application/epub+zip"); // TODO: Mimetype
-			return res.sendFile(book);
+			// Honestly most of these checks are unnecessary as
+			// you'll access the book through an OPDS client but, shrug
+			await access(path).catch(() =>
+				res.status(404).send({ message: "Book not found" }),
+			);
+
+			const type = mime.getType(path);
+			if (!type || OPDS_MIME_ALLOW_LIST.indexOf(type) === -1)
+				return res.status(415).send({ message: "Not a supported mime type" });
+
+			return res.header("Content-Type", type).sendFile(book);
 		},
 	);
 }
