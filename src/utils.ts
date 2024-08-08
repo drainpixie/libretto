@@ -67,7 +67,7 @@ export const toKebabCase = (input: string) =>
 export const removeFileExtension = (input: string) =>
 	input.split(".").shift() ?? input;
 
-export const env = {
+export const ENV = {
 	dataPath: parseString("DATA", resolve(process.cwd(), "data")),
 	port: parseNumber("PORT", 3000),
 	host: parseString("HOST", "127.0.0.1"),

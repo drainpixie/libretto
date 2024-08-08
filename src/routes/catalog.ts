@@ -4,18 +4,18 @@ import { default as mime } from "mime";
 
 import { resolve } from "node:path";
 import { OPDS_MIME_ALLOW_LIST, feed, rel } from "../opds";
-import { env, removeFileExtension, toKebabCase, toTitleCase } from "../utils";
+import { ENV, removeFileExtension, toKebabCase, toTitleCase } from "../utils";
 
 export default async function (app: FastifyInstance) {
 	app.get("/catalog", async (_, res) => {
 		const data = feed()
-			.title(env.id)
-			.id(env.id.toLowerCase())
+			.title(ENV.id)
+			.id(ENV.id.toLowerCase())
 			.link("self", "/catalog", rel("navigation"))
 			.link("start", "/catalog", rel("navigation"))
 			.updated(new Date().toISOString());
 
-		for (const file of await readdir(env.dataPath)) {
+		for (const file of await readdir(ENV.dataPath)) {
 			// TODO: Parse metadata from file
 			const cleanFilename = removeFileExtension(file);
 			const type = mime.getType(file);
@@ -64,7 +64,7 @@ export default async function (app: FastifyInstance) {
 		{ schema: bookSchema },
 		async (req, res) => {
 			const { book } = req.params;
-			const path = resolve(env.dataPath, book);
+			const path = resolve(ENV.dataPath, book);
 
 			// Honestly most of these checks are unnecessary as
 			// you'll access the book through an OPDS client but, shrug

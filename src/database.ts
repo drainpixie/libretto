@@ -5,7 +5,7 @@ import { default as mime } from "mime";
 
 import { APP } from ".";
 import { OPDS_MIME_ALLOW_LIST } from "./opds";
-import { env, fetchBookInfo, removeFileExtension } from "./utils";
+import { ENV, fetchBookInfo, removeFileExtension } from "./utils";
 
 export const DB = sqlite(resolve(process.cwd(), "libretto.db"));
 
@@ -21,7 +21,7 @@ export async function initialise() {
     );
   `);
 
-	for (const file of await readdir(env.dataPath)) {
+	for (const file of await readdir(ENV.dataPath)) {
 		const mimetype = mime.getType(file);
 		if (!mimetype || OPDS_MIME_ALLOW_LIST.indexOf(mimetype) === -1) {
 			APP.log.warn(`Skipping ${file} due to unsupported mime type`);

@@ -4,7 +4,7 @@ import { default as staticd } from "@fastify/static";
 import { fastify } from "fastify";
 
 import { initialise } from "./database";
-import { env } from "./utils";
+import { ENV } from "./utils";
 
 import catalog from "./routes/catalog";
 import root from "./routes/root";
@@ -18,9 +18,9 @@ try {
 	await APP.register(cors)
 		.register(helmet)
 		.register(root)
-		.register(staticd, { root: env.dataPath })
+		.register(staticd, { root: ENV.dataPath })
 		.register(catalog)
-		.listen({ port: env.port, host: env.host });
+		.listen({ port: ENV.port, host: ENV.host });
 } catch (err) {
 	APP.log.error(err);
 	process.exit(1);
