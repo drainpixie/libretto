@@ -1,4 +1,4 @@
-import { access, readdir, stat } from "node:fs/promises";
+import { access, readdir } from "node:fs/promises";
 import type { FastifyInstance } from "fastify";
 import { default as mime } from "mime";
 
@@ -32,6 +32,7 @@ export default async function (app: FastifyInstance) {
 					"@_href": `/catalog/${file}`,
 					"@_type": type,
 				},
+				{ name: "John Doe" },
 				rel("acquisition"),
 				toKebabCase(cleanFilename),
 				{
@@ -67,9 +68,11 @@ export default async function (app: FastifyInstance) {
 
 			// Honestly most of these checks are unnecessary as
 			// you'll access the book through an OPDS client but, shrug
-			await access(path).catch(() =>
-				res.status(404).send({ message: "Book not found" }),
-			);
+			try {
+				await access(path);
+			} catch {
+				return res.status(404).send({ message: "Book not found" });
+			}
 
 			const type = mime.getType(path);
 			if (!type || OPDS_MIME_ALLOW_LIST.indexOf(type) === -1)

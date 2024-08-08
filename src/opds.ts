@@ -1,7 +1,6 @@
 import { XMLBuilder } from "fast-xml-parser";
 
 // https://specs.opds.io/opds-1.2.html
-// Regions help because folding.
 
 export const OPDS_MIME_ALLOW_LIST = [
 	"application/x-mobipocket-ebook",
@@ -12,6 +11,7 @@ export const OPDS_MIME_ALLOW_LIST = [
 	"text/fb2+xml",
 ];
 
+// Regions help because folding.
 // #region OPDS Data Types
 interface Link {
 	"@_rel": string;
@@ -21,12 +21,12 @@ interface Link {
 
 interface Author {
 	name: string;
-	uri: string;
 }
 
 interface Entry {
 	title: string;
 	link: Link;
+	author: Author;
 	updated: string;
 	id: string;
 	content: {
@@ -43,7 +43,6 @@ interface Feed {
 		link: Link[];
 		title: string;
 		updated: string;
-		author: Author;
 		entry: Entry[];
 	};
 }
@@ -64,7 +63,6 @@ class FeedBuilder {
 			link: [],
 			title: "",
 			updated: "",
-			author: { name: "", uri: "" },
 			entry: [],
 		},
 	};
@@ -89,19 +87,15 @@ class FeedBuilder {
 		return this;
 	}
 
-	author(name: string, uri: string) {
-		this.#feed.feed.author = { name, uri };
-		return this;
-	}
-
 	entry(
 		title: string,
 		link: Link,
+		author: Author,
 		updated: string,
 		id: string,
 		content: { "@_type": string; "#text": string },
 	) {
-		this.#feed.feed.entry.push({ title, link, updated, id, content });
+		this.#feed.feed.entry.push({ title, link, updated, id, content, author });
 		return this;
 	}
 
