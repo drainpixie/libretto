@@ -1,9 +1,11 @@
 import { arch, platform } from "node:os";
 import { resolve } from "node:path";
+import { default as ISBN } from "@library-pals/isbn";
+
 import { version } from "../package.json";
 
 const LIBRETTO_HEADER = `Libretto/${version} (Node.js ${process.version}; ${platform()}; ${arch()})`;
-const FETCH_OPTIONS: RequestInit = {
+const FETCH_OPTIONS = {
 	headers: { "User-Agent": LIBRETTO_HEADER },
 };
 
@@ -21,26 +23,16 @@ export async function fetchBookInfo(title: string) {
 	const isbn = searchData.docs?.[0]?.isbn?.[0];
 	if (!isbn) return null;
 
-	// Now we fetch by ISBN to *actually* get details.
-	const bookResponse = await fetch(
-		`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&jscmd=details&format=json`,
-		FETCH_OPTIONS,
-	);
+	// We use `@library-pals/isbn` to resolve the ISBN because
+	// OpenLibrary's API sucks and returns missing data and just overall
+	// horrible-to-work-with JSON
+	const resolver = new ISBN();
 
-	const bookJSON = await bookResponse.json();
-	const book = bookJSON[`ISBN:${isbn}`];
-	const details = book?.details;
-
-	return {
-		title: details.title,
-		description: details.description ?? "No description available",
-		cover: details.covers?.[0]
-			? `https://covers.openlibrary.org/b/id/${details.covers[0]}-L.jpg`
-			: details.thumbnail_url ?? null,
-		author: Array.isArray(details.authors)
-			? details.authors.map((x) => x.name).join(", ")
-			: "Unknown",
-	};
+	try {
+		return resolver.resolve(isbn, FETCH_OPTIONS);
+	} catch {
+		return null;
+	}
 }
 
 /**

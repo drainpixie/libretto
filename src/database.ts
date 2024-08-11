@@ -9,27 +9,39 @@ import { ENV, fetchBookInfo, removeFileExtension } from "./utils";
 
 export const DB = sqlite(resolve(process.cwd(), "libretto.db"));
 
-export interface Book {
+export interface Book<SQL extends boolean = true> {
 	id: number;
-	title: string;
-	author: string;
-	description: string;
+	cover?: string;
+	isbn: string;
 	file: string;
 	mime: string;
-	cover?: string;
+	link: string;
+	language: string;
+	published: string;
+	publisher?: string;
+	title: string;
+	authors: SQL extends true ? string : string[];
+	categories: SQL extends true ? string : string[];
+	description: string;
 }
 
 export async function initialise() {
 	DB.pragma("journal_mode = WAL");
 	DB.exec(`
     CREATE TABLE IF NOT EXISTS books (
-      id      INTEGER PRIMARY KEY,
-      cover   TEXT,
-      title   TEXT NOT NULL,
-      author  TEXT NOT NULL,
-	  description TEXT NOT NULL,
-      file    TEXT NOT NULL,
-      mime    TEXT NOT NULL
+      id      		INTEGER PRIMARY KEY,
+      cover   		TEXT,
+	  publisher 	TEXT,
+	  isbn 			TEXT NOT NULL,
+      file 			TEXT NOT NULL,
+      mime 			TEXT NOT NULL,
+	  link 			TEXT NOT NULL,
+	  language 		TEXT NOT NULL,
+	  published 	TEXT NOT NULL,
+      title 		TEXT NOT NULL,
+      authors  		TEXT NOT NULL,
+	  categories 	TEXT NOT NULL,
+	  description 	TEXT NOT NULL
     );
   `);
 
@@ -40,13 +52,14 @@ export async function initialise() {
 			continue;
 		}
 
-		if (DB.prepare("SELECT * FROM books WHERE file = ?").get(file)) {
+		if (getBook(file)) {
 			APP.log.warn(`Skipping ${file} due to already being in the database`);
 			continue;
 		}
 
 		try {
 			const data = await fetchBookInfo(removeFileExtension(file));
+			console.log(data);
 
 			if (!data) {
 				APP.log.warn(`Skipping ${file} due to missing metadata`);
@@ -54,14 +67,20 @@ export async function initialise() {
 			}
 
 			DB.prepare(`
-        INSERT INTO books (title, author, cover, file, mime, description)
-        VALUES (?, ?, ?, ?, ?, ?);
-      `).run(
-				data.title,
-				data.author,
-				data.cover,
+			INSERT INTO books (cover, isbn, file, mime, link, language, published, publisher, title, authors, categories, description)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+			`).run(
+				data.thumbnail,
+				data.isbn,
 				file,
 				mimetype,
+				data.link,
+				data.language,
+				data.publishedDate,
+				data.publisher,
+				data.title,
+				JSON.stringify(data.authors ?? []),
+				JSON.stringify(data.categories ?? []),
 				data.description,
 			);
 		} catch (error) {
@@ -70,10 +89,21 @@ export async function initialise() {
 	}
 }
 
+function transformSQLBook(b: Book<true>): Book<false> {
+	return {
+		...b,
+		authors: JSON.parse(b.authors),
+		categories: JSON.parse(b.categories),
+	};
+}
+
 export function getBook(slug: string) {
-	return DB.prepare("SELECT * FROM books WHERE file = ?").get(slug) as Book;
+	const book = DB.prepare("SELECT * FROM books WHERE file = ?").get(slug);
+	return book ? transformSQLBook(book as Book) : null;
 }
 
 export function getAllBooks() {
-	return DB.prepare("SELECT * FROM books").all() as Book[];
+	return DB.prepare("SELECT * FROM books")
+		.all()
+		.map((book) => transformSQLBook(book as Book));
 }

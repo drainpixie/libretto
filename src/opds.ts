@@ -1,5 +1,5 @@
 import { XMLBuilder } from "fast-xml-parser";
-import { type Book, DB } from "./database";
+import type { Book } from "./database";
 import { removeFileExtension, toKebabCase } from "./utils";
 
 // https://specs.opds.io/opds-1.2.html
@@ -28,13 +28,18 @@ interface Author {
 interface Entry {
 	title: string;
 	link: Link[];
-	author: Author;
+	author: Author[];
 	updated: string;
 	id: string;
 	content: {
 		"@_type": string;
 		"#text": string;
 	};
+	category: { term: string }[];
+	published: string;
+	"dc:language": string;
+	"dc:identifier": string;
+	"dc:publisher": string;
 }
 
 interface Feed {
@@ -89,7 +94,7 @@ class FeedBuilder {
 		return this;
 	}
 
-	entryFromBook(book: Book) {
+	entryFromBook(book: Book<false>) {
 		this.#feed.feed.entry.push({
 			title: book.title,
 			link: [
@@ -103,11 +108,21 @@ class FeedBuilder {
 					"@_href": book.cover ?? "",
 					"@_type": "image/jpeg",
 				},
+				{
+					"@_rel": "alternate",
+					"@_href": book.link,
+					"@_type": "text/html",
+				},
 			],
-			author: { name: book.author },
-			updated: "",
+			author: book.authors.map((name) => ({ name })),
+			updated: new Date().toISOString(),
 			id: toKebabCase(removeFileExtension(book.file)),
 			content: { "@_type": "text", "#text": book.description },
+			category: book.categories.map((term) => ({ term })),
+			published: book.published,
+			"dc:language": book.language,
+			"dc:identifier": book.isbn,
+			"dc:publisher": book.publisher ?? "Unknown",
 		});
 
 		return this;
