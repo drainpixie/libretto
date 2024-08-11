@@ -59,7 +59,6 @@ export async function initialise() {
 
 		try {
 			const data = await fetchBookInfo(removeFileExtension(file));
-			console.log(data);
 
 			if (!data) {
 				APP.log.warn(`Skipping ${file} due to missing metadata`);
