@@ -1,4 +1,6 @@
 import { XMLBuilder } from "fast-xml-parser";
+import { type Book, DB } from "./database";
+import { removeFileExtension, toKebabCase } from "./utils";
 
 // https://specs.opds.io/opds-1.2.html
 
@@ -25,7 +27,7 @@ interface Author {
 
 interface Entry {
 	title: string;
-	link: Link;
+	link: Link[];
 	author: Author;
 	updated: string;
 	id: string;
@@ -87,15 +89,27 @@ class FeedBuilder {
 		return this;
 	}
 
-	entry(
-		title: string,
-		link: Link,
-		author: Author,
-		updated: string,
-		id: string,
-		content: { "@_type": string; "#text": string },
-	) {
-		this.#feed.feed.entry.push({ title, link, updated, id, content, author });
+	entryFromBook(book: Book) {
+		this.#feed.feed.entry.push({
+			title: book.title,
+			link: [
+				{
+					"@_rel": "http://opds-spec.org/acquisition",
+					"@_href": `/catalog/${book.file}`,
+					"@_type": book.mime,
+				},
+				{
+					"@_rel": "http://opds-spec.org/image",
+					"@_href": book.cover ?? "",
+					"@_type": "image/jpeg",
+				},
+			],
+			author: { name: book.author },
+			updated: "",
+			id: toKebabCase(removeFileExtension(book.file)),
+			content: { "@_type": "text", "#text": book.description },
+		});
+
 		return this;
 	}
 

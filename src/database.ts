@@ -9,13 +9,25 @@ import { ENV, fetchBookInfo, removeFileExtension } from "./utils";
 
 export const DB = sqlite(resolve(process.cwd(), "libretto.db"));
 
+export interface Book {
+	id: number;
+	title: string;
+	author: string;
+	description: string;
+	file: string;
+	mime: string;
+	cover?: string;
+}
+
 export async function initialise() {
+	DB.pragma("journal_mode = WAL");
 	DB.exec(`
     CREATE TABLE IF NOT EXISTS books (
       id      INTEGER PRIMARY KEY,
+      cover   TEXT,
       title   TEXT NOT NULL,
       author  TEXT NOT NULL,
-      cover   TEXT,
+	  description TEXT NOT NULL,
       file    TEXT NOT NULL,
       mime    TEXT NOT NULL
     );
@@ -42,11 +54,26 @@ export async function initialise() {
 			}
 
 			DB.prepare(`
-        INSERT INTO books (title, author, cover, file, mime)
-        VALUES (?, ?, ?, ?, ?);
-      `).run(data.title, data.author, data.cover, file, mimetype);
+        INSERT INTO books (title, author, cover, file, mime, description)
+        VALUES (?, ?, ?, ?, ?, ?);
+      `).run(
+				data.title,
+				data.author,
+				data.cover,
+				file,
+				mimetype,
+				data.description,
+			);
 		} catch (error) {
 			APP.log.error(error);
 		}
 	}
+}
+
+export function getBook(slug: string) {
+	return DB.prepare("SELECT * FROM books WHERE file = ?").get(slug) as Book;
+}
+
+export function getAllBooks() {
+	return DB.prepare("SELECT * FROM books").all() as Book[];
 }

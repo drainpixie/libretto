@@ -33,6 +33,7 @@ export async function fetchBookInfo(title: string) {
 
 	return {
 		title: details.title,
+		description: details.description ?? "No description available",
 		cover: details.covers?.[0]
 			? `https://covers.openlibrary.org/b/id/${details.covers[0]}-L.jpg`
 			: details.thumbnail_url ?? null,
