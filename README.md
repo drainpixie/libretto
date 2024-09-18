@@ -2,6 +2,8 @@
 
 A tiny bookworm for [OPDS](https://specs.opds.io/)
 
+![Libretto](.github/assets/libretto.png)
+
 ## 💻 Development
 
 ```sh
